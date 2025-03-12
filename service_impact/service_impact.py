@@ -1,3 +1,6 @@
+import datetime
+import random
+
 class ServiceImpactAnalyzer:
     """
     DFS/BFS search algorithms for CI/CD pipeline optimization.
@@ -243,23 +246,18 @@ class ServiceImpactAnalyzer:
     
     def _generate_mock_commit_data(self, commit_sha, change_type):
         """Generate mock commit data for simulation purposes"""
-        import datetime
-        import random
-        
-        # Simulate some suspicious data if the commit starts with certain characters
-        is_suspicious = commit_sha.startswith(('a', 'b', 'c', 'd', 'e', 'f'))
         
         # Generate mock data
         mock_data = {
             'author': f"user{random.randint(1,5)}@example.com",
             'message': random.choice([
-                "Fixed bug" if not is_suspicious else "quick fix",
-                "Updated documentation" if not is_suspicious else "update",
-                "Added new feature" if not is_suspicious else "temp fix bypass",
-                "Refactored code" if not is_suspicious else "fix issue"
+                "Fixed bug",
+                "Updated documentation",
+                "Added new feature",
+                "Refactored code"
             ]),
             'time': datetime.datetime.now().replace(
-                hour=random.randint(9, 17) if not is_suspicious else random.randint(0, 5)
+                hour=random.randint(9, 17)
             ),
             'files_changed': []
         }
@@ -267,32 +265,22 @@ class ServiceImpactAnalyzer:
         # Generate appropriate files based on the service
         if change_type == 'configuration_change':
             mock_data['files_changed'] = [
-                "config/settings.py" if not is_suspicious else "security/auth_config.py",
-                "deployment/env.yaml" if not is_suspicious else "config/credentials.py"
+                "config/settings.py",
+                "deployment/env.yaml"
             ]
         else:
             mock_data['files_changed'] = [
-                "services/api/endpoints.py" if not is_suspicious else "auth/login.py",
-                "models/data.py" if not is_suspicious else "admin/users.py"
+                "services/api/endpoints.py",
+                "models/data.py"
             ]
         
         # Generate mock code diff
-        if is_suspicious:
-            mock_data['diff'] = """
-            -    validate_user_input(data)
-            +    # TODO: fix this later
-            +    # validate_user_input(data)
-            ...
-            -    password = get_encrypted_password()
-            +    password = "admin123"  # temporary hard-coded for testing
-            """
-        else:
-            mock_data['diff'] = """
-            +    logger.info("Processing user request")
-            ...
-            -    return data.process()
-            +    return data.process_with_validation()
-            """
+        mock_data['diff'] = """
+        +    logger.info("Processing user request")
+        ...
+        -    return data.process()
+        +    return data.process_with_validation()
+        """
             
         return mock_data
     
