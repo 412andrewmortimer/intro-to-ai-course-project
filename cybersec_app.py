@@ -11,7 +11,7 @@ def main():
     
     # Simulate environment events and agent responses
     print("\nRunning cybersecurity monitoring simulation:")
-    for i in range(5):
+    for i in range(50):
         print(f"\n--- Monitoring Cycle {i+1} ---")
         
         # Randomly generate an event type for simulation purposes
