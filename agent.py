@@ -37,7 +37,18 @@ class Agent:
             # Use service impact analysis for code/service changes
             impacted_services = self.service_impact.analyze_service_change(event_data)
             
-            if impacted_services:
+            # Get the last stored analysis which includes the risk assessment
+            analysis = self.data_storage.retrieve_latest('service_impact_analysis')
+            commit_risk = 'unknown'
+            if analysis and 'commit_risk' in analysis:
+                commit_risk = analysis['commit_risk']
+            
+            # Respond based on risk and impact
+            if commit_risk == 'high':
+                return f"SECURITY ALERT: Suspicious commit detected in {event_data['service']}! Impacts {len(impacted_services)} services. Recommend immediate review."
+            elif commit_risk == 'medium':
+                return f"MEDIUM RISK: Potentially concerning change in {event_data['service']} affecting {len(impacted_services)} services. Review recommended."
+            elif impacted_services:
                 return f"SERVICE ALERT: Change in {event_data['service']} impacts {len(impacted_services)} services"
             else:
                 return f"Service change in {event_data['service']} has no downstream impacts"
