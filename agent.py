@@ -2,6 +2,7 @@ from bayesian_analysis.bayesian_ids import BayesianIDS
 from bayesian_analysis.bayesian_network import BayesianNetwork
 from markov_decision_process.markov_process import MarkovDecisionProcess
 from service_impact.service_impact import ServiceImpactAnalyzer
+from git_security.git_monitor import GitSecurityMonitor
 from data_storage import DataStorage
 
 class Agent:
@@ -16,6 +17,7 @@ class Agent:
         self.bayesian_network = BayesianNetwork(self.data_storage)
         self.mdp = MarkovDecisionProcess(self.data_storage)
         self.service_impact = ServiceImpactAnalyzer(self.data_storage)
+        self.git_monitor = GitSecurityMonitor(self.data_storage)
         
         print("Agent initialized with all modules")
     
@@ -65,6 +67,17 @@ class Agent:
             optimal_action = self.mdp.get_optimal_action('network_anomaly', risk_assessment)
             
             return f"NETWORK ACTION: {optimal_action} (risk level: {risk_assessment:.2f})"
+            
+        elif event_type == 'git_activity':
+            # Use Git security monitor for git-related events
+            risk_level, risk_factors = self.git_monitor.analyze_git_activity(event_data)
+            
+            if risk_level == 'high':
+                return f"GIT SECURITY ALERT: High-risk activity detected in {event_data.get('repo_name', 'repository')}! Key factors: {'; '.join(risk_factors[:2])}"
+            elif risk_level == 'medium':
+                return f"GIT SECURITY WARNING: Potentially suspicious activity in {event_data.get('repo_name', 'repository')}. Review recommended."
+            else:
+                return f"Git activity monitored in {event_data.get('repo_name', 'repository')} - no significant concerns"
             
         else:
             return "Unknown event type, no action taken"
