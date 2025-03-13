@@ -28,56 +28,70 @@ class Agent:
             # Use Bayesian analysis for login attempts
             attack_probability = self.bayesian_ids.analyze_login_attempt(event_data)
             
+            # Also get MDP recommendation for login events
+            mdp_action, mdp_description = self.mdp.analyze_event(event_type, event_data)
+            
             if attack_probability > 0.7:
-                return f"HIGH ALERT: Potential attack detected (confidence: {attack_probability:.2f})"
+                return f"HIGH ALERT: Potential attack detected (confidence: {attack_probability:.2f}) - {mdp_description}"
             elif attack_probability > 0.3:
-                return f"MEDIUM ALERT: Suspicious activity detected (confidence: {attack_probability:.2f})"
+                return f"MEDIUM ALERT: Suspicious activity detected (confidence: {attack_probability:.2f}) - {mdp_description}"
             else:
                 return f"LOW ALERT: Normal login activity (confidence: {1-attack_probability:.2f})"
                 
         elif event_type == 'service_change':
             # Use service impact analysis for code/service changes
-            impacted_services = self.service_impact.analyze_service_change(event_data)
+            self.service_impact.analyze_service_change(event_data)
             
             # Get the last stored analysis which includes the risk assessment
             analysis = self.data_storage.retrieve_latest('service_impact_analysis')
-            commit_risk = 'unknown'
-            if analysis and 'commit_risk' in analysis:
-                commit_risk = analysis['commit_risk']
             
-            # Respond based on risk and impact
-            if commit_risk == 'high':
-                return f"SECURITY ALERT: Suspicious commit detected in {event_data['service']}! Impacts {len(impacted_services)} services. Recommend immediate review."
-            elif commit_risk == 'medium':
-                return f"MEDIUM RISK: Potentially concerning change in {event_data['service']} affecting {len(impacted_services)} services. Review recommended."
-            elif impacted_services:
-                return f"SERVICE ALERT: Change in {event_data['service']} impacts {len(impacted_services)} services"
+            if analysis and 'severity' in analysis:
+                severity = analysis['severity']
+                reason = analysis.get('reason', 'Unknown')
+                
+                if severity == 'critical':
+                    return f"CRITICAL: {reason} - Immediate action required!"
+                elif severity == 'high':
+                    return f"HIGH IMPACT: {reason} - Action required"
+                elif severity == 'medium':
+                    return f"MEDIUM IMPACT: {reason} - Monitor closely"
+                else:
+                    return f"LOW IMPACT: {reason} - Normal procedure"
             else:
-                return f"Service change in {event_data['service']} has no downstream impacts"
+                return "Service change detected, impact unknown"
                 
         elif event_type == 'network_traffic':
-            # Use Bayesian network for complex traffic analysis
-            evidence = {
-                'traffic_volume': 'high' if event_data['packet_count'] > 500 else 'low',
-                'protocol': event_data['protocol'],
-                'internal_source': event_data['source_ip'].startswith('192.168')
-            }
+            # Use MDP for optimal decision making on network events
+            action, description = self.mdp.analyze_event(event_type, event_data)
             
-            risk_assessment = self.bayesian_network.analyze_network_traffic(evidence)
-            optimal_action = self.mdp.get_optimal_action('network_anomaly', risk_assessment)
+            # Also use Bayesian network for additional context
+            attack_probability = self.bayesian_network.analyze_network_traffic(event_data)
             
-            return f"NETWORK ACTION: {optimal_action} (risk level: {risk_assessment:.2f})"
+            # Combine insights from both modules
+            if attack_probability > 0.7:
+                severity = "HIGH"
+            elif attack_probability > 0.3:
+                severity = "MEDIUM"
+            else:
+                severity = "LOW"
+                
+            return f"{severity} ALERT: Network traffic - {description} (Attack probability: {attack_probability:.2f})"
             
         elif event_type == 'git_activity':
-            # Use Git security monitor for git-related events
+            # Use git security monitor
             risk_level, risk_factors = self.git_monitor.analyze_git_activity(event_data)
             
-            if risk_level == 'high':
-                return f"GIT SECURITY ALERT: High-risk activity detected in {event_data.get('repo_name', 'repository')}! Key factors: {'; '.join(risk_factors[:2])}"
-            elif risk_level == 'medium':
-                return f"GIT SECURITY WARNING: Potentially suspicious activity in {event_data.get('repo_name', 'repository')}. Review recommended."
-            else:
-                return f"Git activity monitored in {event_data.get('repo_name', 'repository')} - no significant concerns"
+            # Use MDP to help determine optimal response
+            mdp_action, mdp_description = self.mdp.analyze_event(event_type, event_data)
             
-        else:
-            return "Unknown event type, no action taken"
+            if risk_level == 'high':
+                return f"HIGH RISK: Git activity - {', '.join(risk_factors[:2])} - {mdp_description}"
+            elif risk_level == 'medium':
+                return f"MEDIUM RISK: Git activity - {', '.join(risk_factors[:1])} - {mdp_description}"
+            elif risk_level == 'low':
+                return f"LOW RISK: Git activity - Normal behavior - {mdp_description}"
+            else:
+                return f"Git activity analyzed, risk level: {risk_level}"
+        
+        # Default for unknown event types
+        return "Unknown event type, no action taken"

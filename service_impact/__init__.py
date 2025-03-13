@@ -1,1 +1,5 @@
-# Initialize service_impact package
+"""
+Service Impact Analysis package for analyzing the impact of service changes.
+"""
+
+from .service_impact import ServiceImpactAnalyzer

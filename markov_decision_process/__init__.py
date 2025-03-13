@@ -1,1 +1,1 @@
-# Initialize markov_decision_process package
+#Initialize the markov_decision_process package
